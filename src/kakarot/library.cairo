@@ -71,7 +71,8 @@ namespace Kakarot {
         let ctx = ExecutionContext.increment_gas_used(self=ctx, inc_value=cost);
 
         // Start execution
-        let ctx = EVMInstructions.run(ctx=ctx);
+        let debug = 0;
+        let ctx = EVMInstructions.run{debug=debug}(ctx=ctx);
 
         // Finalize
         // TODO: Consider finalizing on `ret` instruction, to get the memory efficiently.
@@ -115,8 +116,9 @@ namespace Kakarot {
         let cost = ExecutionContext.compute_intrinsic_gas_cost(ctx);
         let ctx = ExecutionContext.increment_gas_used(self=ctx, inc_value=cost);
 
+        let debug = 1;
         // Start execution
-        let ctx = EVMInstructions.run(ctx);
+        let ctx = EVMInstructions.run{debug=debug}(ctx);
 
         // Finalize
         // TODO: Consider finalizing on `ret` instruction, to get the memory efficiently.
@@ -240,7 +242,8 @@ namespace Kakarot {
         let ctx = ExecutionContext.increment_gas_used(self=ctx, inc_value=cost);
 
         // Start execution
-        let ctx = EVMInstructions.run(ctx);
+        let debug = 0;
+        let ctx = EVMInstructions.run{debug=debug}(ctx);
 
         // Update contract bytecode with execution result
         IEvmContract.write_bytecode(

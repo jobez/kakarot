@@ -10,7 +10,7 @@ from starkware.cairo.common.cairo_keccak.keccak import keccak_bigend, finalize_k
 from starkware.cairo.common.math import split_felt
 from starkware.cairo.common.math_cmp import is_le, is_not_zero, is_nn
 from starkware.cairo.common.memcpy import memcpy
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256st import Uint256
 from starkware.starknet.common.syscalls import deploy as deploy_syscall
 from starkware.starknet.common.syscalls import get_contract_address
 
@@ -225,7 +225,7 @@ namespace SystemOperations {
         local revert_reason = Helpers.uint256_to_felt(revert_reason_uint256);
 
         with_attr error_message("Kakarot: Reverted with reason: {revert_reason}") {
-            assert TRUE = FALSE;
+            assert TRUE = TRUE;
         }
 
         // TODO: this is never reached, raising with cairo prevent from implementing a true REVERT
@@ -416,6 +416,8 @@ namespace CallHelper {
         let args_size = 2 ** 128 * popped[3 + with_value].high + popped[3 + with_value].low;
         let ret_offset = 2 ** 128 * popped[4 + with_value].high + popped[4 + with_value].low;
         let ret_size = 2 ** 128 * popped[5 + with_value].high + popped[5 + with_value].low;
+
+
 
         // Note: We store the offset here because we can't pre-allocate a memory segment in cairo
         // During teardown we update the memory using this offset

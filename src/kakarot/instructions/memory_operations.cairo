@@ -4,7 +4,7 @@
 
 // Starkware dependencies
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
-from starkware.cairo.common.uint256 import Uint256, uint256_unsigned_div_rem
+from starkware.cairo.common.uint256 import Uint256, uint256_unsigned_div_rem, uint256_le
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.bool import FALSE
@@ -59,6 +59,13 @@ namespace MemoryOperations {
 
         // Read word from memory at offset
         let (new_memory, value, cost) = Memory.load(self=ctx.memory, offset=offset.low);
+
+        %{
+           with open("jhnn_log.org", "a") as logfile:
+             ts = int(datetime.timestamp(datetime.now()))
+             logfile.write(f"{{:at {ts} :from :mload :program-counter {ids.ctx.program_counter} :value [{ids.value.low} {ids.value.high}] }}\n\n")
+        %}
+    
 
         // Push word to the stack
         let stack: model.Stack* = Stack.push(stack, value);
@@ -218,10 +225,18 @@ namespace MemoryOperations {
         let (stack, popped) = Stack.pop_n(self=stack, n=2);
         let offset = popped[0];
         let skip_condition = popped[1];
-
+        // using the low field of the skip condition in the determining if it is other than zero will give incorrect results for any number greater than 2**128, because the limit of representation for the low field is 2^128-1
+        // in this case, the skip_condition_uint256.low field might be zero, while the skip_condition_uint256.high field is not, meaning the number is representatively greater than zero
         // Update pc if skip_jump is anything other then 0
+        %{
+            with open("jhnn_log.org", "a") as logfile:
+                ts =  int(datetime.timestamp(datetime.now()))
+                logfile.write(f"{{:at {ts} :from :jumpi :program-counter {ids.ctx.program_counter} :skip-condition [{ids.skip_condition.low} {ids.skip_condition.high}] :offset [{ids.offset.low} {ids.offset.high}]  }}\n\n")   
+        %}
+        let (is_condition_valid) = uint256_le(Uint256(1,0), skip_condition);
 
-        let is_condition_valid: felt = is_le(1, skip_condition.low);
+
+
 
         if (is_condition_valid != FALSE) {
             // Update pc counter.

@@ -605,6 +605,7 @@ namespace EVMInstructions {
         pedersen_ptr: HashBuiltin*,
         range_check_ptr,
         bitwise_ptr: BitwiseBuiltin*,
+        debug: felt,
     }(ctx: model.ExecutionContext*) -> model.ExecutionContext* {
         alloc_locals;
         // Decode and execute
@@ -613,7 +614,13 @@ namespace EVMInstructions {
         // Check if execution should be stopped
         let stopped: felt = ExecutionContext.is_stopped(self=ctx);
         let is_parent_root: felt = ExecutionContext.is_root(self=ctx.calling_context);
-
+        %{
+          from datetime import datetime        
+          if ids.debug == 1: 
+            ts = int(datetime.timestamp(datetime.now()))
+            with open("jhnn_log.org", "a") as logfile:
+                logfile.write(f"{{:at {ts} :from :run :program-counter {ids.ctx.program_counter} :opcode {hex(memory.get(ids.ctx.call_context.bytecode + ids.ctx.program_counter))} }} \n\n")
+        %}
         // Terminate execution
         if (stopped != FALSE) {
             if (is_parent_root != FALSE) {
@@ -633,16 +640,16 @@ namespace EVMInstructions {
                 );
                 if (bytecode_len == 0) {
                     let ctx = CreateHelper.finalize_calling_context(ctx);
-                    return run(ctx=ctx);
+                    return run{debug=debug}(ctx=ctx);
                 } else {
                     let ctx = CallHelper.finalize_calling_context(ctx);
-                    return run(ctx=ctx);
+                    return run{debug=debug}(ctx=ctx);
                 }
             }
         }
 
         // Continue execution
-        return run(ctx=ctx);
+        return run{debug=debug}(ctx=ctx);
     }
 
     // @notice A placeholder for opcodes that don't exist

@@ -232,6 +232,11 @@ namespace ComparisonOperations {
         let (stack, popped) = Stack.pop_n(self=stack, n=2);
         let b = popped[0];
         let a = popped[1];
+        %{
+            with open("jhnn_log.org", "a") as logfile:
+                ts =  int(datetime.timestamp(datetime.now()))
+                logfile.write(f"{{:at {ts} :from :eq :program-counter {ids.ctx.program_counter} :a [{ids.a.low} {ids.a.high}] :b [ {ids.b.low} {ids.b.high}] }}\n\n") 
+        %}
 
         // Compute the comparison
         let (result) = uint256_eq(a, b);
@@ -310,8 +315,20 @@ namespace ComparisonOperations {
         let a = popped[0];
         let b = popped[1];
 
+        %{
+            with open("jhnn_log.org", "a") as logfile:
+                ts =  int(datetime.timestamp(datetime.now()))
+                logfile.write(f"{{:at {ts} :from :and :program-counter {ids.ctx.program_counter} :a [{ids.a.low} {ids.a.high}] :b [ {ids.b.low} {ids.b.high}] }}\n\n")   
+        %}
+
         // a & b: the bitwise AND result.
         let (result) = uint256_and(a, b);
+        %{
+            with open("jhnn_log.org", "a") as logfile:
+                ts =  int(datetime.timestamp(datetime.now()))
+                logfile.write(f"{{:at {ts} :from :and :program-counter {ids.ctx.program_counter} :result [{ids.result.low} {ids.result.high}]  }}\n\n")   
+        %}
+
 
         // Stack output:
         // a & b: the bitwise AND result.
@@ -469,8 +486,23 @@ namespace ComparisonOperations {
         let shift = popped[0];
         let value = popped[1];
 
+        %{
+            with open("jhnn_log.org", "a") as logfile:
+                ts =  int(datetime.timestamp(datetime.now()))
+                logfile.write(f"{{:at {ts} :from :shift-left :program-counter {ids.ctx.program_counter} :shift [{ids.shift.low} {ids.shift.high}] :value [ {ids.value.low} {ids.value.high}] }}\n\n")   
+        %}
+
+
         // Left shift `value` by `shift`.
         let (result) = uint256_shl(a=value, b=shift);
+
+        %{
+           with open("jhnn_log.org", "a") as logfile:
+             ts = int(datetime.timestamp(datetime.now()))
+             logfile.write(f"{{:at {ts} :from :shift-left :program-counter {ids.ctx.program_counter} :result [ {ids.result.low} {ids.result.high}] }}\n\n")
+        %}
+
+
 
         // Stack output:
         // The result of the shift operation.
@@ -509,8 +541,22 @@ namespace ComparisonOperations {
         let shift = popped[0];
         let value = popped[1];
 
+        %{
+            with open("jhnn_log.org", "a") as logfile:
+                ts =  int(datetime.timestamp(datetime.now()))
+                logfile.write(f"{{:at {ts} :from :shift-right :program-counter {ids.ctx.program_counter} :shift [{ids.shift.low} {ids.shift.high}] :value [ {ids.value.low} {ids.value.high}] }}\n\n")   
+        %}
+
+
         // Right shift `value` by `shift`.
         let (result) = uint256_shr(a=value, b=shift);
+
+        %{
+           with open("jhnn_log.org", "a") as logfile:
+             ts = int(datetime.timestamp(datetime.now()))
+             logfile.write(f"{{:at {ts} :from :shift-right :program-counter {ids.ctx.program_counter} :result [ {ids.result.low} {ids.result.high}] }}\n\n")
+        %}
+
 
         // Stack output:
         // The result of the shift operation.

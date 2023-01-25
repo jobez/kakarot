@@ -151,9 +151,22 @@ namespace StopAndArithmeticOperations {
         let (stack, popped) = Stack.pop_n(self=stack, n=2);
         let a = popped[0];
         let b = popped[1];
-
+        %{
+           with open("jhnn_log.org", "a") as logfile:
+             ts = int(datetime.timestamp(datetime.now()))
+             logfile.write(f"{{:at {ts} :from :sub :program-counter {ids.ctx.program_counter} :a [{ids.a.low} {ids.a.high}] :b [ {ids.b.low} {ids.b.high}] }}\n\n")
+        %}
+    
         // Compute the subtraction
         let (result) = uint256_sub(a, b);
+
+        %{
+           with open("jhnn_log.org", "a") as logfile:
+             ts = int(datetime.timestamp(datetime.now()))
+             logfile.write(f"{{:at {ts} :from :sub :program-counter {ids.ctx.program_counter} :result [{ids.result.low} {ids.result.high}]  }}\n\n")
+        %}
+    
+
 
         // Stack output:
         // a - b: integer result of the subtraction modulo 2^256

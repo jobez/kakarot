@@ -58,6 +58,25 @@ func test__push__should_add_an_element_to_the_stack{
 }
 
 @external
+func test__uint256{
+    syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, bitwise_ptr: BitwiseBuiltin*
+}(uint256_val: Uint256, expected_val: felt) {
+    // Given
+    let stack: model.Stack* = Stack.init();
+    let stack: model.Stack* = Stack.push(stack, uint256_val);
+
+
+    // When
+    let (stack, element) = Stack.pop(stack);
+
+    let element_as_felt = Helpers.uint256_to_felt(element);
+    
+    // Then
+    assert element_as_felt = expected_val;
+    return ();
+}
+
+@external
 func test__pop__should_pop_an_element_to_the_stack{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, bitwise_ptr: BitwiseBuiltin*
 }() {
@@ -229,3 +248,5 @@ func test__swap__should_fail__when_index_2_is_underflow{
     let result = Stack.swap_i(stack, 2);
     return ();
 }
+
+
