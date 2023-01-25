@@ -65,12 +65,11 @@ func test__uint256{
     let stack: model.Stack* = Stack.init();
     let stack: model.Stack* = Stack.push(stack, uint256_val);
 
-
     // When
     let (stack, element) = Stack.pop(stack);
 
     let element_as_felt = Helpers.uint256_to_felt(element);
-    
+
     // Then
     assert element_as_felt = expected_val;
     return ();
@@ -248,5 +247,3 @@ func test__swap__should_fail__when_index_2_is_underflow{
     let result = Stack.swap_i(stack, 2);
     return ();
 }
-
-

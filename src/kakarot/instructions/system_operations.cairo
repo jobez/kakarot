@@ -417,8 +417,6 @@ namespace CallHelper {
         let ret_offset = 2 ** 128 * popped[4 + with_value].high + popped[4 + with_value].low;
         let ret_size = 2 ** 128 * popped[5 + with_value].high + popped[5 + with_value].low;
 
-
-
         // Note: We store the offset here because we can't pre-allocate a memory segment in cairo
         // During teardown we update the memory using this offset
         let return_data: felt* = alloc();

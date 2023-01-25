@@ -61,11 +61,10 @@ namespace MemoryOperations {
         let (new_memory, value, cost) = Memory.load(self=ctx.memory, offset=offset.low);
 
         %{
-           with open("jhnn_log.org", "a") as logfile:
-             ts = int(datetime.timestamp(datetime.now()))
-             logfile.write(f"{{:at {ts} :from :mload :program-counter {ids.ctx.program_counter} :value [{ids.value.low} {ids.value.high}] }}\n\n")
+            with open("jhnn_log.org", "a") as logfile:
+              ts = int(datetime.timestamp(datetime.now()))
+              logfile.write(f"{{:at {ts} :from :mload :program-counter {ids.ctx.program_counter} :value [{ids.value.low} {ids.value.high}] }}\n\n")
         %}
-    
 
         // Push word to the stack
         let stack: model.Stack* = Stack.push(stack, value);
@@ -231,12 +230,9 @@ namespace MemoryOperations {
         %{
             with open("jhnn_log.org", "a") as logfile:
                 ts =  int(datetime.timestamp(datetime.now()))
-                logfile.write(f"{{:at {ts} :from :jumpi :program-counter {ids.ctx.program_counter} :skip-condition [{ids.skip_condition.low} {ids.skip_condition.high}] :offset [{ids.offset.low} {ids.offset.high}]  }}\n\n")   
+                logfile.write(f"{{:at {ts} :from :jumpi :program-counter {ids.ctx.program_counter} :skip-condition [{ids.skip_condition.low} {ids.skip_condition.high}] :offset [{ids.offset.low} {ids.offset.high}]  }}\n\n")
         %}
-        let (is_condition_valid) = uint256_le(Uint256(1,0), skip_condition);
-
-
-
+        let (is_condition_valid) = uint256_le(Uint256(1, 0), skip_condition);
 
         if (is_condition_valid != FALSE) {
             // Update pc counter.

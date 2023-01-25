@@ -1,8 +1,8 @@
 import pytest
 import pytest_asyncio
 
-from tests.utils.uint256 import int_to_uint256
 from tests.utils.errors import kakarot_error
+from tests.utils.uint256 import int_to_uint256
 
 
 @pytest_asyncio.fixture
@@ -16,10 +16,11 @@ async def stack(starknet):
 
 @pytest.mark.asyncio
 class TestStack:
-    @pytest.mark.parametrize("input", [2**127, 2**128])    
+    @pytest.mark.parametrize("input", [2**127, 2**128])
     async def test_stack_jhnn(self, stack, input):
         input_uint256 = int_to_uint256(input)
         await stack.test__uint256(input_uint256, input).call()
+
     async def test_everything_stack(self, stack):
         await stack.test__init__should_return_an_empty_stack().call()
         await stack.test__len__should_return_the_length_of_the_stack().call()

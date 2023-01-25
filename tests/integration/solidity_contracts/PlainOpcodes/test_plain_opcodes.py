@@ -4,6 +4,7 @@ from web3 import Web3
 from tests.utils.errors import kakarot_error
 from tests.utils.uint256 import int_to_uint256
 
+
 @pytest.mark.asyncio
 @pytest.mark.PlainOpcodes
 @pytest.mark.usefixtures("starknet_snapshot")
@@ -155,12 +156,12 @@ class TestPlainOpcodes:
                 )
 
         # @pytest.mark.skip("Test fails when address is 2**128 or greater")
-        @pytest.mark.parametrize("address", [2**127 ,   2**128])
+        @pytest.mark.parametrize("address", [2**127, 2**128])
         async def test_should_not_revert_when_address_is_not_zero(
             self, plain_opcodes, addresses, address
         ):
             address_bytes = address.to_bytes(20, byteorder="big")
-            address_uint256 = int_to_uint256(address)
+            int_to_uint256(address)
             address_hex = Web3.toChecksumAddress(address_bytes)
 
             await plain_opcodes.requireNotZero(

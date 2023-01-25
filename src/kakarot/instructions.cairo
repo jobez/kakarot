@@ -615,11 +615,11 @@ namespace EVMInstructions {
         let stopped: felt = ExecutionContext.is_stopped(self=ctx);
         let is_parent_root: felt = ExecutionContext.is_root(self=ctx.calling_context);
         %{
-          from datetime import datetime        
-          if ids.debug == 1: 
-            ts = int(datetime.timestamp(datetime.now()))
-            with open("jhnn_log.org", "a") as logfile:
-                logfile.write(f"{{:at {ts} :from :run :program-counter {ids.ctx.program_counter} :opcode {hex(memory.get(ids.ctx.call_context.bytecode + ids.ctx.program_counter))} }} \n\n")
+            from datetime import datetime        
+            if ids.debug == 1: 
+              ts = int(datetime.timestamp(datetime.now()))
+              with open("jhnn_log.org", "a") as logfile:
+                  logfile.write(f"{{:at {ts} :from :run :program-counter {ids.ctx.program_counter} :opcode {hex(memory.get(ids.ctx.call_context.bytecode + ids.ctx.program_counter))} }} \n\n")
         %}
         // Terminate execution
         if (stopped != FALSE) {
