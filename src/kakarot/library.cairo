@@ -104,8 +104,8 @@ namespace Kakarot {
         alloc_locals;
 
         %{
-        print(f"{ids.calldata_len=} {ids.calldata=}")
-        breakpoint();
+            print(f"{ids.calldata_len=} {ids.calldata=}")
+            breakpoint();
         %}
 
         // Prepare execution context

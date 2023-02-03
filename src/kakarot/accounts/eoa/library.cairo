@@ -369,7 +369,6 @@ namespace ExternallyOwnedAccount {
         let (local starknet_calldata: felt*) = alloc();
         // dispatches on transaction type
         if (_call.calldata[0] == 2) {
-
             RLP.decode(_call.calldata_len - 1, _call.calldata + 1, items);
             RLP.decode([items].data_len, [items].data, sub_items);
             let (n) = Helpers.bytes_to_felt(
@@ -390,8 +389,8 @@ namespace ExternallyOwnedAccount {
                 evm_calldata_len, sub_items[PAYLOAD_IDX].data, starknet_calldata + 4
             );
             %{
-            print(f"{ids.starknet_calldata=} {ids.evm_calldata_len=}")
-            breakpoint()
+                print(f"{ids.starknet_calldata=} {ids.evm_calldata_len=}")
+                breakpoint()
             %}
             let res = call_contract(
                 contract_address=kakarot_address,

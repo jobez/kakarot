@@ -1,7 +1,8 @@
-
-from eth_utils import decode_hex, keccak, to_bytes, to_checksum_address, function_signature_to_4byte_selector
-
 import pytest_asyncio
+from eth_utils import (
+    function_signature_to_4byte_selector,
+    to_bytes,
+)
 from starkware.starknet.testing.starknet import Starknet
 
 
@@ -13,11 +14,13 @@ async def account_proxy(starknet: Starknet):
         disable_hint_validation=True,
     )
 
+
 @pytest_asyncio.fixture(scope="package")
 async def counter(deploy_solidity_contract, owner):
     return await deploy_solidity_contract(
         "PlainOpcodes", "Counter", caller_address=owner.starknet_address
     )
+
 
 @pytest_asyncio.fixture(scope="package")
 async def default_tx(counter) -> dict:

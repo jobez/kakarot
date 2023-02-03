@@ -155,9 +155,9 @@ namespace ExecutionContext {
         alloc_locals;
 
         %{
-        print(f"{ids.calldata_len=} {ids.calldata=}")
-        #  for x in range(ids.calldata_len+4): memory.get(x + ids.calldata) 
-        breakpoint();
+            print(f"{ids.calldata_len=} {ids.calldata=}")
+            #  for x in range(ids.calldata_len+4): memory.get(x + ids.calldata) 
+            breakpoint();
         %}
 
         let (empty_destroy_contracts: felt*) = alloc();
