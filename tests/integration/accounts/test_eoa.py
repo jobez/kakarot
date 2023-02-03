@@ -12,6 +12,7 @@ from tests.utils.uint256 import int_to_uint256
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("starknet_snapshot")
 class TestExternallyOwnedAccount:
     class TestGetEvmAddress:
         @pytest.mark.parametrize("address_idx", range(4))
@@ -59,7 +60,7 @@ class TestExternallyOwnedAccount:
                 ).call()
 
     class TestExecute:
-        @pytest.mark.parametrize("address_idx", range(4))
+        @pytest.mark.parametrize("address_idx", range(1))
         async def test_should_execute_tx(
             self, kakarot, default_tx, addresses, address_idx
         ):

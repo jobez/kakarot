@@ -35,7 +35,7 @@ test-unit: build-sol
 	poetry run pytest tests/unit --log-cli-level=INFO
 
 run-test-log: build-sol
-	poetry run pytest -k $(test) --log-cli-level=INFO -vvv
+	poetry run pytest -s -k $(test) --log-cli-level=INFO -vvv
 
 run-test: build-sol
 	poetry run pytest -k $(test)

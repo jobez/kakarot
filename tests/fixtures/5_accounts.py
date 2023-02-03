@@ -1,5 +1,5 @@
 
-from eth_utils import decode_hex, keccak, to_bytes, to_checksum_address
+from eth_utils import decode_hex, keccak, to_bytes, to_checksum_address, function_signature_to_4byte_selector
 
 import pytest_asyncio
 from starkware.starknet.testing.starknet import Starknet
@@ -29,5 +29,5 @@ async def default_tx(counter) -> dict:
         "gas": 999999999,
         "to": to_bytes(int(counter.evm_contract_address, 16)),
         "value": 10000000000000000,
-        "data": b"",
+        "data": function_signature_to_4byte_selector("inc()"),
     }
