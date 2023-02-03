@@ -389,7 +389,7 @@ namespace ExternallyOwnedAccount {
             );
             let res = call_contract(
                 contract_address=kakarot_address,
-                function_selector=0xB18CF02D874A8ACA5B6480CE1D57FA9C6C58015FD68F6B6B6DF59F63BBA85D,
+                function_selector=EXECUTE_AT_ADDRESS_SELECTOR,
                 calldata_size=4 + evm_calldata_len,
                 calldata=starknet_calldata,
             );
