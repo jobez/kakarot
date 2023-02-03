@@ -16,7 +16,6 @@ from starkware.cairo.common.dict import (
     dict_write,
 )
 from starkware.cairo.common.default_dict import default_dict_new, default_dict_finalize
-from starkware.cairo.common.registers import get_fp_and_pc
 from starkware.cairo.common.math import split_felt
 from starkware.cairo.common.math_cmp import is_le, is_not_zero, is_nn
 from starkware.cairo.common.memcpy import memcpy
@@ -237,6 +236,7 @@ namespace SystemOperations {
         //     assert TRUE = FALSE;
         // }
 
+        let ctx = ExecutionContext.update_stack(ctx, stack);
         let ctx = ExecutionContext.revert(self=ctx, revert_reason=revert_reason);
 
         // TODO: this is never reached, raising with cairo prevent from implementing a true REVERT
@@ -529,13 +529,9 @@ namespace CallHelper {
         let casted_reverted_state = cast(reverted_state, model.KeyValue*);
         let p_reverted_state = dict_start.prev_value;
         let casted_p_reverted_state = cast(p_reverted_state, model.KeyValue*);
-        %{
-            print(f"{ids.dict_start=} {ids.dict_end=} {ids.reverted_state=} {ids.p_reverted_state=} {ids.casted_p_reverted_state=} {ids.casted_reverted_state=} ")
-            breakpoint()
-        %}
 
         if (reverted_state != 0) {
-            IEvmContract.write_storage(
+            IContractAccount.write_storage(
                 contract_address=starknet_contract_address,
                 key=casted_reverted_state.key,
                 value=casted_reverted_state.value,
@@ -565,11 +561,22 @@ namespace CallHelper {
         let is_reverted: felt = ExecutionContext.is_reverted(self=ctx);
 
         if (is_reverted != 0) {
-            let revert_reason_uint256 = Helpers.to_uint256(is_reverted);
-            let status = Uint256(low=0, high=0);
+
+            let revert_contract_state_dict_end = ctx.revert_contract_state.dict_end;
+            let revert_contract_state_dict_start = ctx.revert_contract_state.dict_start;
+            let (squashed_dict_start, squashed_dict_end) = default_dict_finalize(
+                revert_contract_state_dict_start, revert_contract_state_dict_end, 0
+            );
+            finalize_reverting_writes(ctx, squashed_dict_start, squashed_dict_end);
 
             let ctx = ExecutionContext.update_sub_context(ctx.calling_context, ctx);
             let ctx = ExecutionContext.increment_gas_used(ctx, ctx.sub_context.gas_used);
+            %{
+            print(f"{ids.ctx.create_addresses_len=} {ids.ctx.create_addresses=}")
+            breakpoint()
+            %}
+
+            SelfDestructHelper._finalize_loop(ctx.create_addresses_len, ctx.create_addresses);
 
             // Append contracts selfdestruct to the calling_context
             let ctx = ExecutionContext.push_to_destroy_contracts(
@@ -577,21 +584,19 @@ namespace CallHelper {
                 destroy_contracts_len=ctx.sub_context.destroy_contracts_len,
                 destroy_contracts=ctx.sub_context.destroy_contracts,
             );
-
+            let revert_reason_uint256 = Helpers.to_uint256(is_reverted);
+            let status = Uint256(low=0, high=0);
             let stack = Stack.push(ctx.stack, status);
             let ctx = ExecutionContext.update_stack(ctx, stack);
+
+
             // ret_offset, see prepare_args
+
             let memory = Memory.store(
                 ctx.memory, revert_reason_uint256, [ctx.sub_context.return_data - 1]
             );
             let ctx = ExecutionContext.update_memory(ctx, memory);
 
-            let revert_contract_state_dict_end = ctx.revert_contract_state.dict_end;
-            let (squashed_dict_start, squashed_dict_end) = default_dict_finalize(
-                ctx.revert_contract_state.dict_start, revert_contract_state_dict_end, 0
-            );
-            finalize_reverting_writes(ctx, squashed_dict_start, squashed_dict_end);
-            SelfDestructHelper._finalize_loop(ctx.create_addresses_len, ctx.create_addresses);
 
             return ctx;
         } else {
@@ -828,6 +833,7 @@ namespace CreateHelper {
             );
         let (local return_data: felt*) = alloc();
         let (empty_destroy_contracts: felt*) = alloc();
+        let (empty_create_addresses: felt*) = alloc();
         let (empty_events: model.Event*) = alloc();
         let stack = Stack.init();
         let memory = Memory.init();
@@ -847,8 +853,10 @@ namespace CreateHelper {
             let (starknet_contract_address) = Accounts.create(
                 contract_account_class_hash_, evm_contract_address
             );
+            let ctx = ExecutionContext.push_create_address(ctx, starknet_contract_address);    
             let (local revert_contract_state_dict_start) = default_dict_new(0);
             tempvar revert_contract_state: model.RevertContractState* = new model.RevertContractState(revert_contract_state_dict_start, revert_contract_state_dict_start);
+            // TODO: sanity check usages of cast in execution context initiation
             tempvar sub_ctx = new model.ExecutionContext(
                 call_context=call_context,
                 program_counter=0,
@@ -869,7 +877,7 @@ namespace CreateHelper {
                 events_len=0,
                 events=empty_events,
                 create_addresses_len=0,
-                create_addresses=cast(0, felt*),
+                create_addresses=empty_create_addresses,
                 revert_contract_state=revert_contract_state,
                 reverted=FALSE,
                 read_only=FALSE,
@@ -885,17 +893,13 @@ namespace CreateHelper {
                 salt=_salt,
             );
 
-<<<<<<< variant A
             let (contract_account_class_hash_) = contract_account_class_hash.read();
             let (starknet_contract_address) = Accounts.create(
                 contract_account_class_hash_, evm_contract_address
             );
->>>>>>> variant B
-            let (starknet_contract_address) = ContractAccount.deploy(evm_contract_address);
-            let ctx = ExecutionContext.push_create_address(ctx, evm_contract_address);
+            let ctx = ExecutionContext.push_create_address(ctx, starknet_contract_address);    
             let (local revert_contract_state_dict_start) = default_dict_new(0);
             tempvar revert_contract_state: model.RevertContractState* = new model.RevertContractState(revert_contract_state_dict_start, revert_contract_state_dict_start);
-======= end
             tempvar sub_ctx = new model.ExecutionContext(
                 call_context=call_context,
                 program_counter=0,
@@ -916,7 +920,7 @@ namespace CreateHelper {
                 events_len=0,
                 events=cast(0, model.Event*),
                 create_addresses_len=0,
-                create_addresses=cast(0, felt*),
+                create_addresses=empty_create_addresses,
                 revert_contract_state=revert_contract_state,
                 reverted=FALSE,
                 read_only=FALSE,
@@ -937,13 +941,9 @@ namespace CreateHelper {
     }(ctx: model.ExecutionContext*) -> model.ExecutionContext* {
         alloc_locals;
 
-<<<<<<< variant A
-        IContractAccount.write_bytecode(
->>>>>>> variant B
         let is_reverted: felt = ExecutionContext.is_reverted(self=ctx);
 
-        IEvmContract.write_bytecode(
-======= end
+        IContractAccount.write_bytecode(
             contract_address=ctx.starknet_contract_address,
             bytecode_len=ctx.return_data_len,
             bytecode=ctx.return_data,
@@ -991,6 +991,10 @@ namespace SelfDestructHelper {
         }
 
         let starknet_contract_address = [destroy_contracts];
+        %{
+        print(f"{ids.starknet_contract_address}")
+        breakpoint()
+        %}
         let (bytecode_len) = IAccount.bytecode_len(contract_address=starknet_contract_address);
         let (erase_data) = alloc();
         Helpers.fill(bytecode_len, erase_data, 0);
@@ -1017,7 +1021,7 @@ namespace SelfDestructHelper {
         let empty_destroy_contracts = _finalize_loop(
             ctx.destroy_contracts_len, ctx.destroy_contracts
         );
-
+        let (empty_create_addresses: felt*) = alloc();
         let (revert_contract_state_dict_start) = default_dict_new(0);
         tempvar revert_contract_state: model.RevertContractState* = new model.RevertContractState(revert_contract_state_dict_start, revert_contract_state_dict_start);
 
@@ -1041,7 +1045,7 @@ namespace SelfDestructHelper {
             events_len=0,
             events=cast(0, model.Event*),
             create_addresses_len=0,
-            create_addresses=cast(0, felt*),
+            create_addresses=empty_create_addresses,
             revert_contract_state=revert_contract_state,
             reverted=FALSE,
             read_only=FALSE,

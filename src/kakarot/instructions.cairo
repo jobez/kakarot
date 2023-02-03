@@ -612,14 +612,14 @@ namespace EVMInstructions {
 
         // Check if execution should be stopped
         let stopped: felt = ExecutionContext.is_stopped(self=ctx);
+        let is_root: felt = ExecutionContext.is_root(self=ctx);
         let is_reverted: felt = ExecutionContext.is_reverted(self=ctx);
-        let is_parent_root: felt = ExecutionContext.is_root(self=ctx.calling_context);
 
         // Terminate execution
         if (stopped != FALSE) {
-            // emit events for stopped execution contexts
+            // TODO should only emit if stopped and not reverted
             let ctx = LoggingHelper.finalize(ctx);
-            if (is_parent_root != FALSE) {
+            if (is_root != FALSE) {
                 if (ctx.destroy_contracts_len != 0) {
                     let ctx = SelfDestructHelper.finalize(ctx);
                     return ctx;

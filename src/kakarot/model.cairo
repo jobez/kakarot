@@ -47,6 +47,7 @@ namespace model {
         value: felt,
     }
 
+    //TODO: docstring
     struct RevertContractState {
         // A dictionary that tracks the accounts' state.
         dict_start: DictAccess*,

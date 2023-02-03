@@ -1,4 +1,3 @@
-import random
 import string
 
 import pytest
@@ -29,24 +28,15 @@ async def system_operations(
 
 @pytest.mark.asyncio
 class TestSystemOperations:
-    @pytest.mark.parametrize("size", [35])  # range(34, 65)
+    # TODO cohere how this test works, given that revert messages aren't just thrown like they were used to
+    @pytest.mark.parametrize("size", [35])   
     async def test_revert(
         self,
         system_operations,
         size,
         contract_account,
         kakarot,
-        account_registry,
     ):
-        random.seed(0)
-        bytecode = [random.randint(0, 255) for _ in range(32)]
-
-        contract_account = await contract_account.write_bytecode(bytecode).execute(
-            caller_address=1
-        )
-
-        starknet_contract_address = contract_account.call_info.contract_address
-        evm_contract_address = 1
 
         # reason = 0x abcdefghijklmnopqrstuvwxyzABCDEF
         reason = int(string.ascii_letters[:32].encode().hex(), 16)
@@ -57,11 +47,7 @@ class TestSystemOperations:
             reason_low,
             reason_high,
             size,
-            evm_contract_address=evm_contract_address,
-            registry_address_=account_registry.contract_address,
-        ).call(caller_address=starknet_contract_address)
-
-        breakpoint()
+        ).call()
 
     async def test_return(self, system_operations):
         await system_operations.test__exec_return_should_return_context_with_updated_return_data(
