@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
+import "./Parent.sol";
 
 interface ICounter {
     function count() external view returns (uint256);
@@ -127,4 +128,21 @@ contract PlainOpcodes {
             extcodecopy(target, add(extcode, 0x20), offset, size)
         }
     }
+
+    function testRevertDeletesChildContract() external returns (bool success, bytes memory returnData) {
+        Parent parent = new Parent();
+        // parent.triggerRevert();
+
+        return address(parent.child()).call(abi.encodeWithSignature("doSomething()"));
+    }
+
+    function testChildDeletionOnRevert() public returns (bool success, bytes memory returnData) {
+        Parent parent = new Parent();
+        // child contract is created in the same execution context as a revert
+        parent.createChild();
+        
+        try parent.triggerRevert() {} catch {}
+
+        return address(parent.child()).call(abi.encodeWithSignature("doSomething()"));
+    }    
 }

@@ -6,7 +6,7 @@
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
-from starkware.cairo.common.default_dict import default_dict_new, default_dict_finalize
+from starkware.cairo.common.default_dict import default_dict_new
 from starkware.cairo.common.dict import DictAccess
 from starkware.cairo.common.math import assert_le, assert_nn
 from starkware.cairo.common.memcpy import memcpy
@@ -308,7 +308,7 @@ namespace ExecutionContext {
         return new model.ExecutionContext(
             call_context=self.call_context,
             program_counter=self.program_counter,
-            stopped=self.stopped,
+            stopped=TRUE,
             return_data=self.return_data,
             return_data_len=self.return_data_len,
             stack=self.stack,
@@ -638,6 +638,7 @@ namespace ExecutionContext {
             );
     }
 
+    // TODO: revise doc 
     // @notice Update the array of events to emit in the case of a execution context successfully running to completion.
     // @param self The pointer to the execution context.
     // @param destroy_contracts_len Array length of events to add.
@@ -688,7 +689,15 @@ namespace ExecutionContext {
     func push_create_address(
         self: model.ExecutionContext*, create_contract_address: felt
     ) -> model.ExecutionContext* {
+       %{
+        print(f"{ids.self=}")
+        breakpoint()
+        %}
         assert [self.create_addresses + self.create_addresses_len] = create_contract_address;
+        %{
+        print(f"{ids.self=}")
+        breakpoint()
+        %}
         return new model.ExecutionContext(
             call_context=self.call_context,
             program_counter=self.program_counter,

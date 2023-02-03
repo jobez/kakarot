@@ -135,10 +135,11 @@ func test__exec_mload_should_load_a_value_from_memory_with_memory_expansion{
     return ();
 }
 
+// TODO: remove this dummy test when a better system is propped up
 @external
 func test__exec_sstore_jhnn{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, bitwise_ptr: BitwiseBuiltin*
-}(account_registry_address: felt, evm_contract_address: felt, registry_address_: felt) {
+}(evm_contract_address: felt, registry_address_: felt) {
     // Given
     alloc_locals;
     registry_address.write(registry_address_);

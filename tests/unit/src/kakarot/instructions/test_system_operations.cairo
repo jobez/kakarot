@@ -79,57 +79,104 @@ func test__exec_revert_callhelper_calling_context{
     reason_low: felt,
     reason_high: felt,
     size: felt,
-    account_registry_address: felt,
-    evm_contract_address: felt,
-    registry_address_: felt,
 ) -> (reason: Uint256) {
     // Given
     alloc_locals;
 
-    registry_address.write(registry_address_);
-
-    let calling_context = ExecutionContext.init_empty();
-    let ctx = ExecutionContext.init_at_address(
-        evm_contract_address, 10000, 0, cast(0, felt*), 0, calling_context, 0, cast(0, felt*), 0
+    let (contract_account_class_hash_) = contract_account_class_hash.read();
+    let (evm_contract_address) = CreateHelper.get_create_address(0, 0);
+    let (local starknet_contract_address) = Accounts.create(
+        contract_account_class_hash_, evm_contract_address
     );
 
-    let key = 1;
-    let stack: model.Stack* = Stack.push(ctx.stack, Uint256(3, 0));  // value
-    let stack: model.Stack* = Stack.push(stack, Uint256(key, 0));  // key
-    let ctx = ExecutionContext.update_stack(ctx, stack);
-    let ctx = MemoryOperations.exec_sstore(ctx);
+    // Fill the stack with input data
+    let stack: model.Stack* = Stack.init();
+    let gas = Helpers.to_uint256(Constants.TRANSACTION_GAS_LIMIT);
+    let (address_high, address_low) = split_felt(evm_contract_address);
+    let address = Uint256(address_low, address_high);
+    tempvar value = Uint256(2, 0);
+    let args_offset = Uint256(3, 0);
+    let args_size = Uint256(4, 0);
+    tempvar ret_offset = Uint256(5, 0);
+    tempvar ret_size = Uint256(6, 0);
+    let stack = Stack.push(stack, ret_size);
+    let stack = Stack.push(stack, ret_offset);
+    let stack = Stack.push(stack, args_size);
+    let stack = Stack.push(stack, args_offset);
+    let stack = Stack.push(stack, value);
+    let stack = Stack.push(stack, address);
+    let stack = Stack.push(stack, gas);
+    // Put some value in memory as it is used for calldata with args_size and args_offset
+    // Word is 0x 11 22 33 44 55 66 77 88 00 00 ... 00
+    // calldata should be 0x 44 55 66 77
+    let memory_word = Uint256(low=0, high=22774453838368691922685013100469420032);
+    let memory_offset = Uint256(0, 0);
+    let stack = Stack.push(stack, memory_word);
+    let stack = Stack.push(stack, memory_offset);
+    let (bytecode) = alloc();
+    local bytecode_len = 0;
+    let ctx = TestHelpers.init_context_with_stack(bytecode_len, bytecode, stack);
+    let ctx = MemoryOperations.exec_mstore(ctx);
 
-    let stack: model.Stack* = Stack.push(ctx.stack, Uint256(4, 0));  // value
+    let sub_ctx = SystemOperations.exec_call(ctx);
+
+    // simulate a couple sstore calls
+    // let calling_context = ExecutionContext.init_empty();
+    // let calldata: felt* = alloc();
+
+    // let ctx = ExecutionContext.init_at_address(
+    //     evm_contract_address, 10000, 0, calldata, 0, calling_context, 0, calldata, 0
+    // );
+
+    let key = 1;
+    let stack: model.Stack* = Stack.push(sub_ctx.stack, Uint256(3, 0));  // value
     let stack: model.Stack* = Stack.push(stack, Uint256(key, 0));  // key
-    let ctx = ExecutionContext.update_stack(ctx, stack);
-    let ctx = MemoryOperations.exec_sstore(ctx);
+    let sub_ctx = ExecutionContext.update_stack(sub_ctx, stack);
+    let sub_ctx = MemoryOperations.exec_sstore(sub_ctx);
+
+    let stack: model.Stack* = Stack.push(sub_ctx.stack, Uint256(4, 0));  // value
+    let stack: model.Stack* = Stack.push(stack, Uint256(key, 0));  // key
+    let sub_ctx = ExecutionContext.update_stack(sub_ctx, stack);
+    let sub_ctx = MemoryOperations.exec_sstore(sub_ctx);
 
     // When
-    let revert_contract_state_dict_end = ctx.revert_contract_state.dict_end;
-    %{ print(f"{ids.revert_contract_state_dict_end=} {ids.ctx.revert_contract_state=}") %}
 
+    
+
+    // then we revert the context
     let reason_uint256 = Uint256(low=reason_low, high=reason_high);
     local offset: Uint256 = Uint256(32, 0);
 
-    let (bytecode) = alloc();
-    let stack: model.Stack* = Stack.init();
-    let stack: model.Stack* = Stack.push(stack, reason_uint256);  // value
+    
+    let stack: model.Stack* = Stack.push(sub_ctx.stack, reason_uint256);  // value
     let stack: model.Stack* = Stack.push(stack, offset);  // offset
-    let ctx: model.ExecutionContext* = TestHelpers.init_context_with_stack(0, bytecode, stack);
-    let ctx: model.ExecutionContext* = MemoryOperations.exec_mstore(ctx);
+    let sub_ctx = ExecutionContext.update_stack(sub_ctx, stack);
+    let sub_ctx: model.ExecutionContext* = MemoryOperations.exec_mstore(sub_ctx);
 
-    let stack: model.Stack* = Stack.push(ctx.stack, Uint256(0, 0));  // offset is 0 to have the reason at 0x20
+    let stack: model.Stack* = Stack.push(sub_ctx.stack, Uint256(0, 0));  // offset is 0 to have the reason at 0x20
     let stack: model.Stack* = Stack.push(stack, Uint256(size, 0));  // size
-    let ctx: model.ExecutionContext* = ExecutionContext.update_stack(ctx, stack);
+    let sub_ctx: model.ExecutionContext* = ExecutionContext.update_stack(sub_ctx, stack);
 
-    // When
-    let ctx = SystemOperations.exec_revert(ctx);
-    let ctx = CallHelper.finalize_calling_context(ctx);
+    // let sub_ctx = ExecutionContext.revert(self=sub_ctx, revert_reason=100);
+    
+
+    // // When
+    let sub_ctx = SystemOperations.exec_revert(sub_ctx);
+    let sub_ctx = ExecutionContext.update_return_data(sub_ctx, 0, sub_ctx.return_data);
+    let ctx = CallHelper.finalize_calling_context(sub_ctx);
+
+    // let ctx = CallHelper.finalize_calling_context(ctx);
 
     let (stack, success) = Stack.peek(ctx.stack, 0);
+    // // then
+    // // we expect a failure for the resultant value on the stack
     assert success.low = 0;
 
-    // Then
+     // we expect the sstore calls to not persist post-revert handling
+
+    // we expect create addresses to no longer exist
+
+
     // TODO: update test when revert does not break the execution
 
     return (reason=Uint256(10, 10));
