@@ -47,6 +47,32 @@ namespace model {
         value: felt,
     }
 
+    struct RevertContractState {
+        // A dictionary that tracks the accounts' state.
+        dict_start: DictAccess*,
+        dict_end: DictAccess*,
+    }
+
+    // @notice info: https://www.evm.codes/about#calldata
+    // @notice Struct storing data related to an event emitting, as in when calling `emit_event`
+    // @notice conveying the data as a struct is necessary because we want to delay the actual emitting until an execution context is completed and not reverted
+    // TODO: touch up params doc string below
+    // @param keys_len - the executed bytecode
+    // @param keys - length of bytecode
+    // @param data_len - byte space where the data parameter of a transaction or call is held
+    // @param data - length of calldata
+    struct Event {
+        keys_len: felt,
+        keys: Uint256*,
+        data_len: felt,
+        data: felt*,
+    }
+
+    struct KeyValue {
+        key: Uint256,
+        value: Uint256,
+    }
+
     // @dev Stores all data relevant to the current execution context
     // @param call_context - call context data
     // @param program_counter - keep track of the current position in the program as it is being executed
@@ -83,6 +109,12 @@ namespace model {
         sub_context: ExecutionContext*,
         destroy_contracts_len: felt,
         destroy_contracts: felt*,
+        events_len: felt,
+        events: Event*,
+        create_addresses_len: felt,
+        create_addresses: felt*,
+        revert_contract_state: RevertContractState*,
+        reverted: felt,
         read_only: felt,
     }
 }
