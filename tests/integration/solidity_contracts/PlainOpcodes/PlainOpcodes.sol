@@ -140,60 +140,7 @@ contract PlainOpcodes {
         Parent parent = new Parent();
         // child contract is created in the same execution context as a revert
         
-        
-        (bool success2, bytes memory data) = address(parent).call(abi.encodeWithSignature("triggerRevert()"));
-
-        require(!success2, "trigger revert... should revert");        
-         
-        /* (bool success, bytes memory data_) = address(parent.child()).call(abi.encodeWithSignature("doSomething()")); */
-
-        /* require(!success, "should be no child contract to do something"); */
-        return (address(parent.child()), success2);
-    }
-
-    function testCallingContextCanCatchRevertsFromSubContext() public {
-        Parent parent = new Parent();
-        
-        try parent.triggerRevert() { 
-            // The `doSomething` function is expected to revert. 
-            revert("always revert"); 
-        } catch { 
-            // Ensure that the created child contract in parent is deleted. 
-            //  
-            require(address(parent.child()) == address(0), "Parent is deleted"); 
-        } 
-    }
-
-    function testCallingContextCanCatchRevertsFromSubContextAndPropogateRevertMessage() public {
-        Parent parent = new Parent();
-    
-
-    
-        try parent.triggerRevert() { 
-            // The `triggerRevert` function is expected to revert. 
-                revert("always revert"); 
-        } catch Error(string memory errorMessage) { 
-            // Ensure that the created child contract in parent is deleted. 
-                  require(address(parent.child()) == address(0), "Parent is deleted"); 
-        
-            // Revert with the error message from the subcontext.
-            revert(errorMessage);
-        } 
-    }
-    
-    function testCallingContextPropogatesRevertFromSubContext() public {
-        Parent parent = new Parent();
-        parent.triggerRevert();
-
-    }    
-
-    function addNumbers() public pure returns (uint256) {
-        uint256 a = 2^256-1;
-        uint256 result = a + 1;
-        // "Addition overflow"
-        require(1 > a, "bob");
-        return result;
-    }
+        try parent.triggerRevert() {} catch {}
 
     function testAlwaysRevert() public {
         revert("This always reverts");

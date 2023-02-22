@@ -9,6 +9,9 @@ from starkware.cairo.common.uint256 import Uint256
 from starkware.starknet.common.syscalls import deploy, get_contract_address
 from starkware.cairo.common.math import split_felt, assert_not_zero, assert_le
 
+// Third party dependencies
+from openzeppelin.token.erc20.library import ERC20
+
 // Local dependencies
 from kakarot.constants import (
     Constants,
@@ -41,7 +44,26 @@ func constructor{
     account_proxy_class_hash.write(account_proxy_class_hash_);
     contract_account_class_hash.write(contract_account_class_hash_);
     let (contract_address: felt) = get_contract_address();
+    native_token_address.write(contract_address);
     return ();
+}
+
+// @dev The contract account initialization includes a call to the Kakarot contract
+// in order to get the native token address. As the Kakarot contract is not deployed within this test, we make a call to this contract instead.
+@view
+func get_native_token{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
+    native_token_address: felt
+) {
+    return Kakarot.get_native_token();
+}
+
+// @dev The contract account initialization includes a call to an ERC20 contract to set an infitite transfer allowance to Kakarot.
+// As the ERC20 contract is not deployed within this test, we make a call to this contract instead.
+@external
+func approve{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
+    spender: felt, amount: Uint256
+) -> (success: felt) {
+    return ERC20.approve(spender, amount);
 }
 
 @external
@@ -75,7 +97,11 @@ func test__exec_return_should_return_context_with_updated_return_data{
 @external
 func test__exec_revert_callhelper_calling_context{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, bitwise_ptr: BitwiseBuiltin*
-}(reason_low: felt, reason_high: felt, size: felt) -> (reason: Uint256) {
+}(
+    reason_low: felt,
+    reason_high: felt,
+    size: felt,
+) -> (reason: Uint256) {
     // Given
     alloc_locals;
 
@@ -137,10 +163,13 @@ func test__exec_revert_callhelper_calling_context{
 
     // When
 
+    
+
     // then we revert the context
     let reason_uint256 = Uint256(low=reason_low, high=reason_high);
     local offset: Uint256 = Uint256(32, 0);
 
+    
     let stack: model.Stack* = Stack.push(sub_ctx.stack, reason_uint256);  // value
     let stack: model.Stack* = Stack.push(stack, offset);  // offset
     let sub_ctx = ExecutionContext.update_stack(sub_ctx, stack);
@@ -151,6 +180,7 @@ func test__exec_revert_callhelper_calling_context{
     let sub_ctx: model.ExecutionContext* = ExecutionContext.update_stack(sub_ctx, stack);
 
     // let sub_ctx = ExecutionContext.revert(self=sub_ctx, revert_reason=100);
+    
 
     // // When
     let sub_ctx = SystemOperations.exec_revert(sub_ctx);
@@ -164,9 +194,10 @@ func test__exec_revert_callhelper_calling_context{
     // // we expect a failure for the resultant value on the stack
     assert success.low = 0;
 
-    // we expect the sstore calls to not persist post-revert handling
+     // we expect the sstore calls to not persist post-revert handling
 
     // we expect create addresses to no longer exist
+
 
     // TODO: update test when revert does not break the execution
 

@@ -167,6 +167,26 @@ class TestPlainOpcodes:
                 address_hex,
                 caller_address=addresses[0].starknet_address,
             )
+    class TestRevert:
+        async def test_revert_should_revert_contract_writes(self, counter, caller, owner):
+            success, data = await caller.call(
+                target=counter.evm_contract_address,
+                payload=counter.encodeABI("doRevert"),
+                caller_address=owner.starknet_address,
+            )
+            assert await counter.count() == 0
+
+            assert success == False
+            
+        async def test_revert_should_revert_contract_create_addresses(self, plain_opcodes, owner):
+            success, data = await plain_opcodes.testChildDeletionOnRevert(
+                      caller_address=owner.starknet_address,
+            )
+            breakpoint()
+            assert success == True
+
+            breakpoint()
+
 
     class TestExceptionHandling:
         async def test_revert_should_always_revert(self, plain_opcodes, owner):

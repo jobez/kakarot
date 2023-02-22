@@ -6,7 +6,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.cairo.common.bool import FALSE
 from starkware.starknet.common.syscalls import deploy as deploy_syscall
-from starkware.starknet.common.syscalls import get_caller_address, get_contract_address
+from starkware.starknet.common.syscalls import get_contract_address
 from starkware.starknet.common.storage import normalize_address
 from starkware.cairo.common.hash_state import (
     hash_finalize,
@@ -72,10 +72,11 @@ namespace Accounts {
         return (contract_address=contract_address);
     }
 
-    // @notice deploys a new account proxy
-    // @dev deploys an instance of an account
+    // @notice Deploy a new account proxy
+    // @dev Deploy an instance of an account
     // @param evm_address The Ethereum address which will be controlling the account
     // @param class_hash The hash of the implemented account (eoa/contract)
+    // @return account_address The Starknet Account Proxy address
     func create{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}(
         class_hash: felt, evm_address: felt
     ) -> (account_address: felt) {

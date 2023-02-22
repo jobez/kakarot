@@ -1,19 +1,12 @@
 %lang starknet
 
-from utils.utils import Helpers
-from kakarot.constants import Constants
-from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, BitwiseBuiltin
-from starkware.cairo.common.cairo_secp.signature import verify_eth_signature_uint256
-from starkware.starknet.common.syscalls import get_tx_info, get_caller_address, call_contract
-from starkware.cairo.common.uint256 import Uint256
+from kakarot.interfaces.interfaces import IEth, IKakarot
+from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
+from starkware.starknet.common.syscalls import call_contract
+from starkware.cairo.common.uint256 import Uint256, uint256_not
 from starkware.cairo.common.alloc import alloc
-from starkware.cairo.common.math import split_felt
-from starkware.cairo.common.cairo_keccak.keccak import keccak, finalize_keccak, keccak_bigend
-from utils.rlp import RLP
 from utils.eth_transaction import EthTransaction
-from starkware.cairo.common.math_cmp import is_le, is_le_felt, is_not_zero
-from starkware.cairo.common.registers import get_label_location
-from starkware.cairo.common.bool import TRUE, FALSE
+from starkware.cairo.common.bool import FALSE
 from starkware.cairo.common.memcpy import memcpy
 
 @storage_var
@@ -63,10 +56,16 @@ namespace ExternallyOwnedAccount {
         assert is_initialized = 0;
         evm_address.write(_evm_address);
         kakarot_address.write(_kakarot_address);
+        // Give infinite ETH transfer allowance to Kakarot
+        let (native_token_address) = IKakarot.get_native_token(_kakarot_address);
+        let (infinite) = uint256_not(Uint256(0, 0));
+        IEth.approve(native_token_address, _kakarot_address, infinite);
         is_initialized_.write(1);
         return ();
     }
 
+    // @notice Read stored EVM address.
+    // @return evm_address The stored address.
     func get_evm_address{syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr}() -> (
         evm_address: felt
     ) {
@@ -74,11 +73,11 @@ namespace ExternallyOwnedAccount {
         return (evm_address=address);
     }
 
-    // @notice checks if tx is signed and valid for each call
-    // @param call_array_len The length of the call array
-    // @param call_array The call array
-    // @param calldata_len The length of the calldata
-    // @param calldata The calldata
+    // @notice Check if tx is signed and valid for each call.
+    // @param call_array_len The length of the call array.
+    // @param call_array The call array.
+    // @param calldata_len The length of the calldata.
+    // @param calldata The calldata.
     func validate{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
