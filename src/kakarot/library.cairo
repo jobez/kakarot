@@ -78,7 +78,8 @@ namespace Kakarot {
         let ctx = ExecutionContext.increment_gas_used(self=ctx, inc_value=cost);
 
         // Start execution
-        let ctx = EVMInstructions.run(ctx=ctx);
+        let debug = 0;
+        let ctx = EVMInstructions.run{debug=debug}(ctx=ctx);
 
         // Finalize
         // TODO: Consider finalizing on `ret` instruction, to get the memory efficiently.
@@ -123,7 +124,20 @@ namespace Kakarot {
         let ctx = ExecutionContext.increment_gas_used(self=ctx, inc_value=cost);
 
         // Start execution
-        let ctx = EVMInstructions.run(ctx);
+        let debug = 1;
+        let ctx = EVMInstructions.run{debug=debug}(ctx);
+        let is_reverted = ExecutionContext.is_reverted(self=ctx);
+
+        if (is_reverted != 0) {
+            local revert_reason = ctx.return_data[0];
+            %{
+                print(f"{ids.revert_reason=} {ids.ctx=}")
+                breakpoint()
+            %}
+            with_attr error_message("Kakarot: Reverted with reason: {revert_reason}") {
+                assert is_reverted = 0;
+            }
+        }
 
         // Finalize
         // TODO: Consider finalizing on `ret` instruction, to get the memory efficiently.
@@ -239,7 +253,8 @@ namespace Kakarot {
         let ctx = ExecutionContext.increment_gas_used(self=ctx, inc_value=cost);
 
         // Start execution
-        let ctx = EVMInstructions.run(ctx);
+        let debug = 0;
+        let ctx = EVMInstructions.run{debug=debug}(ctx);
 
         // Update contract bytecode with execution result
         IContractAccount.write_bytecode(

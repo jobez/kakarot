@@ -122,6 +122,18 @@ func execute_at_address{
     let memory_accesses_len = summary.memory.squashed_end - summary.memory.squashed_start;
     let stack_accesses_len = summary.stack.squashed_end - summary.stack.squashed_start;
 
+    %{
+        from datetime import datetime
+
+        ts = int(datetime.timestamp(datetime.now()))
+        # memory_py = [memory[ids.summary.memory.squashed_start + x] for x in range(ids.memory_accesses_len)]
+        return_py = [memory[ids.summary.return_data + x] for x in range(ids.summary.return_data_len)]
+        # stack_py = [memory[ids.summary.stack.squashed_start + x] for x in range(ids.stack_accesses_len)]
+
+        with open("revert.org", "a") as logfile:
+            logfile.write(f"{{:at {ts} :from :execute_at_address :stack_accesses_len {ids.stack_accesses_len} :stack_len {ids.summary.stack.len_16bytes} :memory_accesses_len {ids.memory_accesses_len}  :memory_bytes_len {ids.summary.memory.bytes_len} :return_data_len {ids.summary.return_data_len} :return_data {return_py}  }} \n\n")
+    %}
+
     return (
         stack_accesses_len=stack_accesses_len,
         stack_accesses=summary.stack.squashed_start,

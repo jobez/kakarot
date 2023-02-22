@@ -598,6 +598,7 @@ namespace EVMInstructions {
     }
 
     func run{
+        debug: felt,
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         range_check_ptr,
@@ -612,6 +613,18 @@ namespace EVMInstructions {
         let is_root: felt = ExecutionContext.is_root(self=ctx);
         let is_reverted: felt = ExecutionContext.is_reverted(self=ctx);
 
+        %{
+            from datetime import datetime        
+            if ids.debug == 1:
+              bytecode = ids.ctx.call_context.bytecode
+              pc = ids.ctx.program_counter 
+              bytecode =  memory.get(bytecode + pc)    
+              if not isinstance(bytecode, int): bytecode = 45887 
+              ts = int(datetime.timestamp(datetime.now()))
+              with open("revert.org", "a") as logfile:
+                  logfile.write(f"{{:at {ts} :starknet-address {ids.ctx.starknet_contract_address} :from :run :stopped {ids.stopped} :is_root {ids.is_root} :is_reverted {ids.is_reverted} :program-counter {ids.ctx.program_counter} :opcode {hex(bytecode)} }} \n\n")
+        %}
+
         // Terminate execution
         if (stopped != FALSE) {
             // TODO should only emit if stopped and not reverted
@@ -625,24 +638,24 @@ namespace EVMInstructions {
             } else {
                 let is_precompile = Precompiles.is_precompile(address=ctx.evm_contract_address);
                 if (is_precompile != FALSE) {
-                    let ctx = CallHelper.finalize_calling_context(ctx);
-                    return run(ctx=ctx);
+                    let ctx = CallHelper.finalize_calling_context{debug=debug}(ctx);
+                    return run{debug=debug}(ctx=ctx);
                 }
                 let (bytecode_len) = IAccount.bytecode_len(
                     contract_address=ctx.starknet_contract_address
                 );
                 if (bytecode_len == 0) {
-                    let ctx = CreateHelper.finalize_calling_context(ctx);
-                    return run(ctx=ctx);
+                    let ctx = CreateHelper.finalize_calling_context{debug=debug}(ctx);
+                    return run{debug=debug}(ctx=ctx);
                 } else {
-                    let ctx = CallHelper.finalize_calling_context(ctx);
-                    return run(ctx=ctx);
+                    let ctx = CallHelper.finalize_calling_context{debug=debug}(ctx);
+                    return run{debug=debug}(ctx=ctx);
                 }
             }
         }
 
         // Continue execution
-        return run(ctx=ctx);
+        return run{debug=debug}(ctx=ctx);
     }
 
     // @notice A placeholder for opcodes that don't exist

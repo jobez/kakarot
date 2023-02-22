@@ -576,8 +576,17 @@ namespace EnvironmentalInformation {
     }(ctx: model.ExecutionContext*) -> model.ExecutionContext* {
         // Get return data size.
         let return_data_size = Helpers.to_uint256(ctx.sub_context.return_data_len);
+        %{
+            from datetime import datetime        
+            bytecode = ids.ctx.call_context.bytecode
+            pc = ids.ctx.program_counter 
+            bytecode =  memory.get(bytecode + pc)    
+            if not isinstance(bytecode, int): bytecode = 45887 
+            ts = int(datetime.timestamp(datetime.now()))
+            with open("revert.org", "a") as logfile:
+                logfile.write(f"{{:at {ts} :starknet-address {ids.ctx.starknet_contract_address} :from :returndatasize :program-counter {ids.ctx.program_counter} :opcode {hex(bytecode)} :return_data_size [{ids.return_data_size.low} {ids.return_data_size.high}] }} \n\n")
+        %}
         let stack: model.Stack* = Stack.push(self=ctx.stack, element=return_data_size);
-
         // Update the execution context.
         // Update context stack.
         let ctx = ExecutionContext.update_stack(self=ctx, new_stack=stack);
@@ -623,6 +632,18 @@ namespace EnvironmentalInformation {
             data_offset=return_data_offset.low,
             slice_len=element_len.low,
         );
+
+        %{
+            from datetime import datetime        
+            bytecode = ids.ctx.call_context.bytecode
+            pc = ids.ctx.program_counter 
+            bytecode =  memory.get(bytecode + pc)    
+            if not isinstance(bytecode, int): bytecode = 45887 
+            return_copy_py = [memory[ids.sliced_return_data + x] for x in range(ids.element_len.low)]
+            ts = int(datetime.timestamp(datetime.now()))
+            with open("revert.org", "a") as logfile:
+                logfile.write(f"{{:at {ts} :starknet-address {ids.ctx.starknet_contract_address} :from :returndatacopy :program-counter {ids.ctx.program_counter} :opcode {hex(bytecode)} :return_data_copy [{return_copy_py}] }} \n\n")
+        %}
 
         let memory: model.Memory* = Memory.store_n(
             self=ctx.memory,

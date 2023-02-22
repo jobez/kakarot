@@ -231,6 +231,13 @@ namespace MemoryOperations {
 
         let (is_condition_valid) = uint256_le(Uint256(1, 0), skip_condition);
 
+        %{
+            from datetime import datetime        
+            ts = int(datetime.timestamp(datetime.now()))
+            with open("revert.org", "a") as logfile:
+                logfile.write(f"{{:at {ts} :from :jumpi :program-counter {ids.ctx.program_counter-1} :opcode {hex(memory.get(ids.ctx.call_context.bytecode + ids.ctx.program_counter-1))} :skip_condition [ {ids.skip_condition.low} {ids.skip_condition.high}] :offset [ {ids.offset.low} {ids.offset.high}] }} \n\n")
+        %}
+
         if (is_condition_valid != FALSE) {
             // Update pc counter.
             let ctx = ExecutionContext.update_program_counter(ctx, offset.low);
@@ -413,7 +420,6 @@ namespace MemoryOperations {
             let ctx = ExecutionContext.increment_gas_used(ctx, GAS_COST_SSTORE);
             return ctx;
         } else {
-
             // TODO: reason about key/value here
             // i.e. the likelihood of unexpected behavior of using key.low as the key
             dict_write{dict_ptr=revert_contract_state_dict_end}(

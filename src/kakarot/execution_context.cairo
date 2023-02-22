@@ -299,16 +299,16 @@ namespace ExecutionContext {
             );
     }
 
-    // TODO add docstring
-    func is_reverted(self: model.ExecutionContext*) -> felt {
-        return self.reverted;
-    }
-
-    func revert(self: model.ExecutionContext*, revert_reason: felt) -> model.ExecutionContext* {
+    // TODO debug
+    // @notice Stop the current execution context.
+    // @dev When the execution context is stopped, no more instructions can be executed.
+    // @param self The pointer to the execution context.
+    // @return The pointer to the updated execution context.
+    func go(self: model.ExecutionContext*) -> model.ExecutionContext* {
         return new model.ExecutionContext(
             call_context=self.call_context,
             program_counter=self.program_counter,
-            stopped=TRUE,
+            stopped=FALSE,
             return_data=self.return_data,
             return_data_len=self.return_data_len,
             stack=self.stack,
@@ -327,7 +327,48 @@ namespace ExecutionContext {
             create_addresses_len=self.create_addresses_len,
             create_addresses=self.create_addresses,
             revert_contract_state=self.revert_contract_state,
-            reverted=revert_reason,
+            reverted=FALSE,
+            read_only=self.read_only,
+            );
+    }
+
+    // TODO add docstring
+    func is_reverted(self: model.ExecutionContext*) -> felt {
+        return self.reverted;
+    }
+
+    func throw_if_revert(self: model.ExecutionContext*, revert_reason: felt) {
+        with_attr error_message("Kakarot: Reverted with reason: {revert_reason}") {
+            assert revert_reason = 0;
+        }
+        return ();
+    }
+
+    func revert(self: model.ExecutionContext*, revert_reason: felt) -> model.ExecutionContext* {
+        assert [self.return_data] = revert_reason;
+        return new model.ExecutionContext(
+            call_context=self.call_context,
+            program_counter=self.program_counter,
+            stopped=TRUE,
+            return_data=self.return_data,
+            return_data_len=1,
+            stack=self.stack,
+            memory=self.memory,
+            gas_used=self.gas_used,
+            gas_limit=self.gas_limit,
+            gas_price=self.gas_price,
+            starknet_contract_address=self.starknet_contract_address,
+            evm_contract_address=self.evm_contract_address,
+            calling_context=self.calling_context,
+            sub_context=self.sub_context,
+            destroy_contracts_len=self.destroy_contracts_len,
+            destroy_contracts=self.destroy_contracts,
+            events_len=self.events_len,
+            events=self.events,
+            create_addresses_len=self.create_addresses_len,
+            create_addresses=self.create_addresses,
+            revert_contract_state=self.revert_contract_state,
+            reverted=TRUE,
             read_only=self.read_only,
             );
     }
@@ -638,7 +679,7 @@ namespace ExecutionContext {
             );
     }
 
-    // TODO: revise doc 
+    // TODO: revise doc
     // @notice Update the array of events to emit in the case of a execution context successfully running to completion.
     // @param self The pointer to the execution context.
     // @param destroy_contracts_len Array length of events to add.
@@ -689,15 +730,8 @@ namespace ExecutionContext {
     func push_create_address(
         self: model.ExecutionContext*, create_contract_address: felt
     ) -> model.ExecutionContext* {
-       %{
-        print(f"{ids.self=}")
-        breakpoint()
-        %}
         assert [self.create_addresses + self.create_addresses_len] = create_contract_address;
-        %{
-        print(f"{ids.self=}")
-        breakpoint()
-        %}
+
         return new model.ExecutionContext(
             call_context=self.call_context,
             program_counter=self.program_counter,

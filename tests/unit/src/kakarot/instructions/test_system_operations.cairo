@@ -75,11 +75,7 @@ func test__exec_return_should_return_context_with_updated_return_data{
 @external
 func test__exec_revert_callhelper_calling_context{
     syscall_ptr: felt*, pedersen_ptr: HashBuiltin*, range_check_ptr, bitwise_ptr: BitwiseBuiltin*
-}(
-    reason_low: felt,
-    reason_high: felt,
-    size: felt,
-) -> (reason: Uint256) {
+}(reason_low: felt, reason_high: felt, size: felt) -> (reason: Uint256) {
     // Given
     alloc_locals;
 
@@ -141,13 +137,10 @@ func test__exec_revert_callhelper_calling_context{
 
     // When
 
-    
-
     // then we revert the context
     let reason_uint256 = Uint256(low=reason_low, high=reason_high);
     local offset: Uint256 = Uint256(32, 0);
 
-    
     let stack: model.Stack* = Stack.push(sub_ctx.stack, reason_uint256);  // value
     let stack: model.Stack* = Stack.push(stack, offset);  // offset
     let sub_ctx = ExecutionContext.update_stack(sub_ctx, stack);
@@ -158,7 +151,6 @@ func test__exec_revert_callhelper_calling_context{
     let sub_ctx: model.ExecutionContext* = ExecutionContext.update_stack(sub_ctx, stack);
 
     // let sub_ctx = ExecutionContext.revert(self=sub_ctx, revert_reason=100);
-    
 
     // // When
     let sub_ctx = SystemOperations.exec_revert(sub_ctx);
@@ -172,10 +164,9 @@ func test__exec_revert_callhelper_calling_context{
     // // we expect a failure for the resultant value on the stack
     assert success.low = 0;
 
-     // we expect the sstore calls to not persist post-revert handling
+    // we expect the sstore calls to not persist post-revert handling
 
     // we expect create addresses to no longer exist
-
 
     // TODO: update test when revert does not break the execution
 

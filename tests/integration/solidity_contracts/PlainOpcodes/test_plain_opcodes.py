@@ -2,6 +2,7 @@ import pytest
 from eth_utils import to_checksum_address
 from web3 import Web3
 
+from tests.utils.constants import ZERO_ADDRESS
 from tests.utils.errors import kakarot_error
 
 
@@ -166,8 +167,17 @@ class TestPlainOpcodes:
                 address_hex,
                 caller_address=addresses[0].starknet_address,
             )
-    class TestRevert:
-        async def test_revert_should_revert_contract_writes(self, counter, caller, owner):
+
+    class TestExceptionHandling:
+        async def test_revert_should_always_revert(self, plain_opcodes, owner):
+            with kakarot_error("This always reverts"):
+                await plain_opcodes.testAlwaysRevert(
+                    caller_address=owner.starknet_address,
+                )
+
+        async def test_revert_should_revert_contract_writes(
+            self, counter, caller, owner
+        ):
             success, data = await caller.call(
                 target=counter.evm_contract_address,
                 payload=counter.encodeABI("doRevert"),
@@ -176,16 +186,48 @@ class TestPlainOpcodes:
             assert await counter.count() == 0
 
             assert success == False
-            
-        async def test_revert_should_revert_contract_create_addresses(self, plain_opcodes, owner):
-            success, data = await plain_opcodes.testChildDeletionOnRevert(
-                      caller_address=owner.starknet_address,
+
+        # we start our initial tests without using solidity asserts
+        # to bootstrap our certainty that revert behavior is as it should be
+        async def test_revert_via_call(self, plain_opcodes, owner):
+            (
+                address_created_in_reverted_context,
+                succ,
+            ) = await plain_opcodes.testRevertViaCall(
+                caller_address=owner.starknet_address
             )
-            breakpoint()
-            assert success == True
+            assert succ == 0
+            assert address_created_in_reverted_context == ZERO_ADDRESS
 
-            breakpoint()
+        async def test_calling_context_propogates_revert_from_sub_context(
+            self, plain_opcodes, owner
+        ):
+            # evm will propogate revert state, but not the revert message of a revert coming from a subcontext
+            # devs have to propogate themselves explicitly
+            with kakarot_error(0):
+                await plain_opcodes.testCallingContextPropogatesRevertFromSubContext(
+                    caller_address=owner.starknet_address
+                )
 
+        async def test_calling_context_can_catch_reverts_from_sub_context(
+            self, plain_opcodes, owner
+        ):
+            await plain_opcodes.testCallingContextCanCatchRevertsFromSubContext(
+                caller_address=owner.starknet_address
+            )
+
+        async def test_calling_context_can_catch_reverts_from_sub_context_and_propogate_revert_message(
+            self, plain_opcodes, owner
+        ):
+            with kakarot_error("FAIL"):
+                await plain_opcodes.testCallingContextCanCatchRevertsFromSubContextAndPropogateRevertMessage(
+                    caller_address=owner.starknet_address
+                )            
+
+        async def test_jhnn_revert2(self, plain_opcodes, owner):
+            await plain_opcodes.testChildDeletionOnRevert(
+                caller_address=owner.starknet_address
+            )
 
     class TestOriginAndSender:
         @pytest.mark.skip(
