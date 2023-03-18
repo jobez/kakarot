@@ -505,3 +505,22 @@ def get_encoded_payload(
 @functools.wraps(GATEWAY_CLIENT.wait_for_tx)
 async def wait_for_transaction(*args, **kwargs):
     return await GATEWAY_CLIENT.wait_for_tx(*args, **kwargs)
+
+async def init_evm_state_from_genesis(genesis_file):
+    with open(genesis_file, 'r') as f:
+        genesis_data = json.load(f)
+
+    alloc_data = genesis_data['alloc']
+
+    for address, account_data in alloc_data.items():
+        balance = int(account_data.get('balance', "0x0"), 16)
+        nonce = int(account_data.get('nonce', "0x0"), 16)
+        code = account_data.get('code', '')
+        storage = account_data.get('storage', {})
+
+        if code:
+            # handle contract case w/ storage
+            # for storage_key, storage_value in storage.items():            
+        else:
+            await deploy_and_fund_evm_adddresses(address, balance)
+
