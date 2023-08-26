@@ -520,6 +520,12 @@ namespace CallHelper {
                 calldata_len=call_args.args_size,
                 value=call_args.value,
             );
+    
+            %{
+            print(f"init sub context \n {ids.call_args.ret_size=}")
+            breakpoint()
+            %}
+
             let sub_ctx = ExecutionContext.init(
                 call_context=call_context,
                 starknet_contract_address=starknet_contract_address,
@@ -586,6 +592,13 @@ namespace CallHelper {
         let ctx = ExecutionContext.update_stack(ctx, stack);
 
         // ret_offset, see prepare_args
+        %{
+        print(f"finalize_calling_context \n {ids.ctx.sub_context.return_data_len=}")
+        breakpoint()
+
+        %}
+
+
         let memory = Memory.store_n(
             ctx.memory,
             ctx.sub_context.return_data_len,

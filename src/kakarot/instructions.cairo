@@ -64,6 +64,12 @@ namespace EVMInstructions {
         } else {
             assert opcode = [ctx.call_context.bytecode + pc];
         }
+        %{
+            import os
+            if os.path.isfile('should_debug'):
+              print(f"{ids.ctx=} \n {ids.pc=} \n {ids.ctx.starknet_contract_address=} \n {hex(ids.opcode)=}")
+              breakpoint()  
+        %}
 
         // Compute the corresponding offset in the jump table:
         // count 1 for "next line" and 4 steps per opcode: call, opcode, ret

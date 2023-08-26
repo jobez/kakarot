@@ -167,5 +167,10 @@ func eth_send_transaction{
 ) -> (return_data_len: felt, return_data: felt*) {
     Kakarot.assert_caller_is_kakarot_account();
     Kakarot.assert_caller_is_origin(origin);
+    %{
+        with open('should_debug', 'w') as f:
+            f.write('Debugging enabled')
+    %}
+    
     return Kakarot.eth_call(origin, to, gas_limit, gas_price, value, data_len, data);
 }
